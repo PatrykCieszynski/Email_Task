@@ -22,6 +22,10 @@ class Email:
             Email.bad_emails.append(email.split("\n")[0])
 
 
+    def getEmail(self):
+        return self.local_part + "@" + self.domain + "." + self.last_part
+
+
 class File:
     PATH = "./Resources/emails/"
     container = []
@@ -50,7 +54,23 @@ def show_incorrect_emails():
         print("\t" + email)
 
 
+def search_emails_by_text(string):
+    counter = 0
+    found_emails = []
+    for email in Email.container:
+        if string in email.local_part:
+            counter += 1
+            found_emails.append(email.getEmail())
+    if counter > 0:
+        print("Found emails with '" + string + "' in email (" + str(counter) + "):")
+        for email in found_emails:
+            print(email)
+    else:
+        print("Email not found")
+
+
 if __name__ == '__main__':
     emails = Email
     files = File()
     show_incorrect_emails()
+    search_emails_by_text("agustin")
