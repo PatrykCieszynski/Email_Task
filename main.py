@@ -9,9 +9,11 @@ PATH = "./Resources/emails/"
 
 class EmailContainer:
 
-    def __init__(self):
+    def __init__(self, path):
         self.container = set()
         self.bad_emails = []
+        self.emails_sent = set()
+        self.parse_files(path)
 
     def parse_files(self, path):
         for filename in listdir(path):
@@ -34,20 +36,11 @@ class EmailContainer:
                     else:
                         self.bad_emails.append(result)
             file.close()
-        return emails
 
     def show_incorrect_emails(self):
         print("Invalid emails (" + str(len(self.bad_emails)) + "):")
         for email in self.bad_emails:
             print("\t" + str(email))
-
-    def group_by_domain(self):
-        sorted_emails = sorted(self.container, key=lambda x: (x.domain, x.local_part))
-        grouped_emails = [list(domains) for key, domains in groupby(sorted_emails, key=lambda x: x.domain)]
-        for domain in grouped_emails:
-            print("Domain " + domain[0].domain + " (" + str(domain.__len__()) + "):")
-            for email in domain:
-                print("\t" + str(email))
 
     def search_emails_by_text(self, string):
         counter = 0
@@ -63,9 +56,30 @@ class EmailContainer:
         else:
             print("Email not found")
 
+    def group_by_domain(self):
+        sorted_emails = sorted(self.container, key=lambda x: (x.domain, x.local_part))
+        grouped_emails = [list(domains) for key, domains in groupby(sorted_emails, key=lambda x: x.domain)]
+        for domain in grouped_emails:
+            print("Domain " + domain[0].domain + " (" + str(domain.__len__()) + "):")
+            for email in domain:
+                print("\t" + str(email))
+
+    def parse_log_file(self, path_to_log_file):
+        file = open(path_to_log_file, 'r')
+        lines = file.readlines()
+        for line in lines:
+            self.emails_sent.add(Email.match_email(re.search("\'(.+)\'", line).group(1)))
+
+    def find_emails_not_in_logs(self, path_to_log_file):
+        self.parse_log_file(path_to_log_file)
+        unused_emails = list(self.container.difference(self.emails_sent))
+        unused_emails = sorted(unused_emails, key=lambda x: x.local_part)
+        print("Emails not sent (" + str(unused_emails.__len__()) + "):")
+        for mail in unused_emails:
+            print("\t" + str(mail))
+
 
 class Email:
-    bad_emails = []
 
     def __init__(self, local_part, domain):
         self.local_part = local_part
@@ -91,8 +105,8 @@ class Email:
 
 
 if __name__ == '__main__':
-    emails = EmailContainer()
-    emails.parse_files(PATH)
+    emails = EmailContainer(PATH)
     # emails.show_incorrect_emails()
     # emails.search_emails_by_text("agustin")
     # emails.group_by_domain()
+    # emails.find_emails_not_in_logs("./Resources/email-sent.logs")
