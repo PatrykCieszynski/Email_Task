@@ -2,6 +2,7 @@ from os import listdir
 import re
 import csv
 from itertools import groupby
+import argparse
 
 PATTERN = re.compile("(.+)@(.+)\.([a-zA-Z0-9]{1,4})")
 PATH = "./Resources/emails/"
@@ -65,10 +66,27 @@ class EmailContainer:
                 print("\t" + str(email))
 
     def parse_log_file(self, path_to_log_file):
-        file = open(path_to_log_file, 'r')
-        lines = file.readlines()
-        for line in lines:
-            self.emails_sent.add(Email.match_email(re.search("\'(.+)\'", line).group(1)))
+        try:
+            extension = path_to_log_file.split('.')[-1]
+            if extension == "logs":
+                file = open(path_to_log_file, 'r')
+                lines = file.readlines()
+                for line in lines:
+                    self.emails_sent.add(Email.match_email(re.search("\'(.+)\'", line).group(1)))
+            else:
+                raise ValueError
+        except AttributeError:
+            print("Log file has wrong format")
+            quit()
+        except FileNotFoundError:
+            print("Log file not found")
+            quit()
+        except PermissionError:
+            print("No permission to access file")
+            quit()
+        except ValueError:
+            print("Log file has wrong extension")
+            quit()
 
     def find_emails_not_in_logs(self, path_to_log_file):
         self.parse_log_file(path_to_log_file)
@@ -104,9 +122,23 @@ class Email:
                     "domain", self.domain))
 
 
+def handle_command(command):
+    if command.incorrect_emails:
+        emails.show_incorrect_emails()
+    if command.search:
+        emails.search_emails_by_text(command.search)
+    if command.group_by_domain:
+        emails.group_by_domain()
+    if command.find_emails_not_in_logs:
+        emails.find_emails_not_in_logs(command.find_emails_not_in_logs)
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
     emails = EmailContainer(PATH)
-    # emails.show_incorrect_emails()
-    # emails.search_emails_by_text("agustin")
-    # emails.group_by_domain()
-    # emails.find_emails_not_in_logs("./Resources/email-sent.logs")
+    parser.add_argument("--incorrect-emails", "-ic", action="store_true", help="List all incorrect emails")
+    parser.add_argument("--search", "-s", help="Search for email")
+    parser.add_argument("--group-by-domain", "-gbd", action="store_true", help="Group emails by domain")
+    parser.add_argument("--find-emails-not-in-logs", "-feil", help="Find emails that are not in log file")
+    args = parser.parse_args()
+    handle_command(args)
