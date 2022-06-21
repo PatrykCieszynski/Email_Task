@@ -2,7 +2,6 @@ from os import listdir
 import re
 import csv
 from itertools import groupby
-import argparse
 
 PATTERN = re.compile("(.+)@(.+)\.([a-zA-Z0-9]{1,4})")
 PATH = "./Resources/emails/"
@@ -81,7 +80,7 @@ class EmailContainer:
                 for line in lines:
                     self.emails_sent.add(Email.match_email(re.search("\'(.+)\'", line).group(1)))
             else:
-                raise ValueError()
+                raise ValueError
         except AttributeError:
             print("Log file has wrong format")
             quit()
@@ -132,23 +131,28 @@ class Email:
                     "domain", self.domain))
 
 
-def handle_command(command):
-    if command.incorrect_emails:
-        emails.show_incorrect_emails()
-    if command.search:
-        emails.search_emails_by_text(command.search)
-    if command.group_by_domain:
-        emails.group_by_domain()
-    if command.find_emails_not_in_logs:
-        emails.find_emails_not_in_logs(command.find_emails_not_in_logs)
+def choose_menu():
+    while True:
+        print("1. Show incorrect emails")
+        print("2. Search emails by text")
+        print("3. Group emails by domain")
+        print("4. Find emails that are not in the logs file")
+        print("Any other input will quit")
+        choice = input("Choose option number: ")
+        if choice == "1":
+            emails.show_incorrect_emails()
+        elif choice == "2":
+            text = input("For what text should I search?: ")
+            emails.search_emails_by_text(text)
+        elif choice == "3":
+            emails.group_by_domain()
+        elif choice == "4":
+            emails.find_emails_not_in_logs("./Resources/email-sent.logs")
+        else:
+            print("Exiting...")
+            quit()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
     emails = EmailContainer(PATH)
-    parser.add_argument("--incorrect-emails", "-ic", action="store_true", help="List all incorrect emails")
-    parser.add_argument("--search", "-s", help="Search for email")
-    parser.add_argument("--group-by-domain", "-gbd", action="store_true", help="Group emails by domain")
-    parser.add_argument("--find-emails-not-in-logs", "-feil", help="Find emails that are not in log file")
-    args = parser.parse_args()
-    handle_command(args)
+    choose_menu()
