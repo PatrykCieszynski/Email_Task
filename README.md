@@ -44,7 +44,6 @@ Answers for the data in the `emails` directory are provided in the following fil
 - Follow the format of the answers as in provided answer files
 - **use OOP paradigm**
 - You are free to use any third-party libraries
-- Provide README with examples of how to use your script
 - Write Python code that conforms to PEP 8
 - Remember about validating input data,
 - Please handle possible exceptions within the script in a user-friendly way
