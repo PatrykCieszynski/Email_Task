@@ -52,7 +52,7 @@ class EmailContainer:
         counter = 0
         found_emails = []
         for email in self.container:
-            if string in email.local_part:
+            if string in email.unique_name:
                 counter += 1
                 found_emails.append(email)
         if counter > 0:
@@ -63,7 +63,7 @@ class EmailContainer:
             print("Email not found")
 
     def group_by_domain(self):
-        sorted_emails = sorted(self.container, key=lambda x: (x.domain, x.local_part))
+        sorted_emails = sorted(self.container, key=lambda x: (x.domain, x.unique_name))
         grouped_emails = [list(domains) for key, domains in groupby(sorted_emails, key=lambda x: x.domain)]
         for domain in grouped_emails:
             print("Domain " + domain[0].domain + " (" + str(domain.__len__()) + "):")
@@ -100,16 +100,31 @@ class EmailContainer:
     def find_emails_not_in_logs(self, path_to_log_file):
         self.parse_log_file(path_to_log_file)
         unused_emails = list(self.container.difference(self.emails_sent))
-        unused_emails = sorted(unused_emails, key=lambda x: x.local_part)
+        unused_emails = sorted(unused_emails, key=lambda x: x.unique_name)
         print("Emails not sent (" + str(unused_emails.__len__()) + "):")
         for mail in unused_emails:
             print("\t" + str(mail))
 
 
-class Email:
-    def __init__(self, local_part, domain):
-        self.local_part = local_part
-        self.domain = domain
+class UniqueName:
+    def __init__(self, unique_name):
+        self.unique_name = unique_name
+
+
+class Domain:
+    def __init__(self, domain):
+        domain = domain.split(".")
+        self.domain = domain[0]
+        self.domain_type = domain[1]
+
+    def __str__(self):
+        return self.domain + "." + self.domain_type
+
+
+class Email(UniqueName, Domain):
+    def __init__(self, unique_name, domain):
+        UniqueName.__init__(self, unique_name)
+        Domain.__init__(self, domain)
 
     @staticmethod
     def match_email(email):
@@ -121,14 +136,16 @@ class Email:
                 return email.split("\n")[0]
 
     def __str__(self):
-        return self.local_part + "@" + self.domain
+        return self.unique_name + "@" + self.domain + "." + self.domain_type
 
     def __eq__(self, other):
-        return self.local_part == other.local_part and self.domain == other.domain
+        return self.unique_name == other.unique_name and \
+               self.domain == other.domain and \
+               self.domain_type == other.domain_type
 
     def __hash__(self):
-        return hash(("local_part", self.local_part,
-                    "domain", self.domain))
+        return hash(("unique_name", self.unique_name,
+                    "domain", self.domain + "." + self.domain_type))
 
 
 def choose_menu():
